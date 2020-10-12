@@ -90,3 +90,28 @@
 `describe extended access_log`
 
 `describe formatted access_log`
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+
+<style type="text/css">
+    h1{
+        position: relative;
+        color: black;
+    }
+    h1:before{
+        content: attr(text);
+        position: absolute;
+        z-index: 10;
+        color:red;
+        -webkit-mask:linear-gradient(to left, red, transparent );
+    }
+</style>
+</head>
+
+<body>
+    <h1 align="right" text="李建康-inspur">李建康-inspur</h1>
+</body>
+
+</html>
