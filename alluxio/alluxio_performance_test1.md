@@ -1,4 +1,4 @@
-<h1><center>Alluxio 性能测试<center></h1>
+<h1><center>Alluxio 性能测试(一)<center></h1>
 <h3><center>存算分离场景<center></h4>
 
 ## 物理机配置
@@ -21,13 +21,13 @@ Intel(R) Xeon(R) Gold 5120 CPU @ 2.20GHz|2|56|256G|1.1T*7|
 IP|hostname|role|service
 |:-:|:-:|:-:|:-:|
 192.168.1.3|manager.bigdata|管理节点|Namenode,resourcemanager,spark client,alluxio master
-192.168.1.4|calculate.1.bigdata|计算节点|nodemanager,alluxio worker
-192.168.1.5|calculate.2.bigdata|计算节点|nodemanager,alluxio worker
-192.168.1.6|calculate.3.bigdata|计算节点|nodemanager,alluxio worker
-192.168.1.7|calculate.4.bigdata|计算节点|nodemanager,alluxio worker
-192.168.1.8|storage.1.bigdata|存储节点|datanode
-192.168.1.9|storage.2.bigdata|存储节点|datanode
-192.168.1.10|storage.3.bigdata|存储节点|datanode
+192.168.1.4|worker1.bigdata|计算节点|nodemanager,alluxio worker
+192.168.1.5|worker2.bigdata|计算节点|nodemanager,alluxio worker
+192.168.1.6|worker3.bigdata|计算节点|nodemanager,alluxio worker
+192.168.1.7|worker4.bigdata|计算节点|nodemanager,alluxio worker
+192.168.1.8|worker5.bigdata|存储节点|datanode
+192.168.1.9|worker6.bigdata|存储节点|datanode
+192.168.1.10|worker7.bigdata|存储节点|datanode
 
 </div> 
 
