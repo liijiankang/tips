@@ -24,17 +24,17 @@
   * 数据覆盖恢复：只有硬盘厂商及少数几个国家的特殊部门能够做到，它的应用一般都与国家安全有关。
   * 异性系统数据恢复：不常用、比较少见的操作系统下的数据恢复，如MAC、OS2、嵌入式系统、手持系统、实时系统
 
-友商大数据平台：
+**友商大数据平台关于安全的企业级增强：**
 
 * 安全
   * 架构安全：基于开源组件实现功能增强，保持100%的开放性，不使用私有架构和组件。
   * 认证安全：
     * 基于用户和角色的认证统一体系，遵从帐户/角色**RBAC**（Role-Based Access Control）模型
-    * 支持安全协议**Kerberos**，通过Kerberos对帐户信息进行安全认证。
-    * 单点登录，对登录平台的用户进行审计
-  * 文件系统层加密
+    * 支持安全协议Kerberos，通过Kerberos对帐户信息进行安全**认证**。
+    * 单点登录，对登录平台的用户进行**审计**
+  * 文件系统层**加密**
 
-&emsp;&emsp;Kerberos是一种网络认证协议，其设计目标是通过密钥系统为客户机/服务器应用程序提供强大的**身份认证服务**。该认证过程的实现**不依赖于主机操作系统的认证**，**无需基于主机地址的信任**，**不要求网络上所有主机的物理安全**，并假定网络上**传送的数据包可以被任意地读取、修改和插入数据**。在以上情况下， Kerberos 作为一种可信任的第三方认证服务，是通过传统的密码技术（如：共享密钥）执行认证服务的。
+&emsp;&emsp;综上所述，身份认证是大数据安全体系中重要的一环，Kerberos是一种网络认证协议，其设计目标是通过密钥系统为客户机/服务器应用程序提供强大的**身份认证服务**。该认证过程的实现**不依赖于主机操作系统的认证**，**无需基于主机地址的信任**，**不要求网络上所有主机的物理安全**，并假定网络上**传送的数据包可以被任意地读取、修改和插入数据**。在以上情况下， Kerberos 作为一种可信任的第三方认证服务，是通过传统的密码技术（如：共享密钥）执行认证服务的。
 
 <div class="center">
     <img src="picture/1.png" width=600 height=400 />
@@ -72,7 +72,24 @@
 
     端口配置（默认88，749，464），日志文件存放路径，缓存路径等。
 
-* KDC：Kerberos的数据库
+* KDC：密钥分发中心
+* kerberos Server:kerberos服务端，包含认证服务器、密钥分发中心、票据授权服务器
+
+<h2>认证原理</h2>
+
+*部分流程：*
+
+* 用户向认证服务器发送一条明文消息，申请访问服务。
+* 认证服务器检查Kerberos数据库中是否有此用户，如果有则返回两条消息
+  * A:Client/TGS会话密钥。通过用户密钥进行加密。
+  * B:TGT，包含消息A、用户信息、有效期等信息。通过TGS密钥进行加密。
+* 用户使用自己的用户密钥解密消息A，获得Client/TGS会话密钥。然后向票据授权服务器发送两条消息：
+  * C:包含消息B和服务信息。通过TGS密钥进行加密。
+  * D:认证符（Authenticator）,包括用户ID,时间戳等信息。通过Client/TGS会话密钥进行加密。
+* 票据授权服务器检查Kerberos数据库中是否存在用户请求的服务，如果存在则用TGS密钥解密消息C从而获得消息B拿到用户信息、有效期、Client/TGS会话密钥等信息。然后可以顺利解密消息D获得Authenticator，通过对比消息B和Authenticator中的信息进行验证用户是否合法。如果合法则想客户端发送两条消息。
+  * E：client-to-server票据，包含Client/SS会话密钥，用户信息，有效期等。通过服务密钥进行加密。
+  * F：Client/SS会话密钥，通过Client/TGS会话密钥进行加密。
+* 用户接收到消息后用Client/TGS会话密钥解密消息F，获取Client/SS会话密钥，然后可以开始服务请求。
 
 <h2>集成</h2>
 
@@ -231,7 +248,47 @@
     整个流程中使用一个用户principal，并给用户赋予KAFKA,HDFS，YARN等相应服务的访问权限。
 ```
 <h2>关闭Kerberos</h2>
-&emsp;&emsp;Ambari提供了近用Kerberos的按钮，但是实际使用过程中关闭流程出错的概率比较大，总是遇到数据库配置异常的提示。
+&emsp;&emsp;Ambari提供了近用Kerberos的按钮，但是实际使用过程中关闭流程出错的概率比较大，总是遇到数据库配置异常的提示,可以通过后台手动关闭Kerberos，但是各个服务还需要手动修改相应认证配置。
+
+* 需要备份的表
+  
+  *  ambari.servicedesiredstate
+  *  ambari.hostcomponentdesiredstate
+  *  ambari.hostcomponentstate
+  *  ambari.servicecomponentdesiredstate
+  *  ambari.clusterservices
+  *  ambari.clusters
+  *  ambari.kkp_mapping_service
+  *  ambari.kerberos_keytab_principal
+  *  ambari.kerberos_principal
+  *  ambari.kerberos_keytab
+  *  ambari.clusterconfig
+
+* 修改clusters表：页面上启动/禁用Kerberos
+
+    `update ambari.clusters set security_type='NONE';`
+
+    NONE:启用Kerberos按钮可用
+
+    KERBEROS:禁用Kerberos按钮可用
+
+* 删除服务列表中显示的Kerberos组件
+  
+  `delete from ambari.servicedesiredstate where service_name='KERBEROS';`
+
+  `delete from ambari.hostcomponentdesiredstate where service_name='KERBEROS';`
+
+  `delete from ambari.hostcomponentstate where service_name='KERBEROS';`
+
+  `delete from ambari.servicecomponentdesiredstate where service_name='KERBEROS';`
+
+  `delete from ambari.clusterservices where service_name='KERBEROS';`
+
+* 禁用集群Kerberos配置
+  
+  *将ambari.clusterconfig表中type_name="cluster-env"的行中config_data字段中security_enabled的值由true 改为false*
+
+* 重启ambari-server即可
 
 <style>
     .indentation_1 {
